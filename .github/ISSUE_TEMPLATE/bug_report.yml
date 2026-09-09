@@ -1,0 +1,63 @@
+name: Bug report
+description: Something behaves differently than documented.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: >
+        If the bug is a way to escape or bypass a sandbox, stop here and read
+        [SECURITY.md](https://github.com/dragon-sec/.github/blob/main/SECURITY.md)
+        instead — report it privately, not in this form.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you expected, and what you got instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: >
+        Ideally a minimal case. If it involves a specific language server,
+        workspace layout or editor, say which.
+      placeholder: |
+        1. ...
+        2. ...
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Release tag, or the commit you built from.
+    validations:
+      required: true
+
+  - type: input
+    id: platform
+    attributes:
+      label: Platform
+      placeholder: "macOS 15.6 arm64 / Ubuntu 24.04 x86_64"
+    validations:
+      required: true
+
+  - type: input
+    id: editor
+    attributes:
+      label: Editor and language server
+      description: Leave blank if not relevant.
+      placeholder: "Neovim 0.11 + rust-analyzer 2026-08-24"
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: >
+        Relevant output. Check it for paths, tokens and hostnames before
+        pasting — this is a public issue.
+      render: text

@@ -1,0 +1,35 @@
+name: Feature request
+description: Propose a capability or a change in behaviour.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: >
+        What are you unable to do today? Describe the situation, not the
+        solution you have in mind.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you would like instead
+    validations:
+      required: true
+
+  - type: textarea
+    id: trust
+    attributes:
+      label: What it would take to trust it
+      description: >
+        If this widens what a sandboxed process can reach, say what would make
+        that safe — a narrower grant, a prompt, an audit record, a default of
+        off. Requests that widen a profile without an answer here tend to
+        stall.
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered

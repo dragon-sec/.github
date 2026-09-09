@@ -1,0 +1,66 @@
+name: Rust gate
+description: >
+  Format, lint, build and test a Rust workspace. Call this from a job named
+  exactly `gate` — that is the single status context every dragon-sec
+  repository's ruleset requires.
+
+# A composite action rather than a reusable workflow on purpose. A reusable
+# workflow reports its checks as `<caller job> / <inner job>`, so the context
+# would be `gate / something` and the required check named `gate` would never
+# appear. A composite action runs inside the caller's job and keeps the name.
+#
+# Everything here is either preinstalled on the runner or a first-party action
+# pinned by SHA. Nothing is curled. An organization whose product is
+# supply-chain trust does not install its own CI tooling from an unverified
+# tarball — which is also why cargo-deny is not here yet: it needs a
+# reproducible install story before it can be a required check. Tracked
+# separately; adding it later changes only this file, not any ruleset.
+
+inputs:
+  working-directory:
+    description: Directory containing the workspace Cargo.toml.
+    required: false
+    default: "."
+
+runs:
+  using: composite
+  steps:
+    - name: Show toolchain
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      # With a rust-toolchain.toml present this installs and selects the pinned
+      # toolchain, so the gate tests what contributors run locally.
+      run: |
+        rustup show
+        rustup component add rustfmt clippy
+        cargo --version
+        rustc --version
+
+    - name: Cache cargo registry and build output
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: |
+          ~/.cargo/registry/index
+          ~/.cargo/registry/cache
+          ~/.cargo/git/db
+          ${{ inputs.working-directory }}/target
+        key: rust-gate-${{ runner.os }}-${{ hashFiles('**/Cargo.lock', '**/rust-toolchain.toml') }}
+        restore-keys: |
+          rust-gate-${{ runner.os }}-
+
+    - name: Format
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: cargo fmt --all --check
+
+    - name: Lint
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      # --locked so a pull request that edits Cargo.toml without refreshing
+      # Cargo.lock fails here rather than resolving to something nobody pinned.
+      run: cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
+
+    - name: Test
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: cargo test --locked --workspace --all-features
