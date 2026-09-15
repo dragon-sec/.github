@@ -22,17 +22,18 @@ Thanks for the contribution. A few notes before you submit:
 ## Security impact
 
 <!--
-Delete this section only if the change cannot affect confinement. Otherwise say
-what it does to the trust boundary: does it widen a capability profile, change
-what is executed, change how a binary is verified, or add a dependency that runs
-at build time? "Widens nothing" is a fine answer — write it down.
+Delete this section only if the change cannot affect a trust boundary. Otherwise
+say what it changes: who can authenticate and with what, what a role, scope or
+token can reach, what can cross a tenant boundary, how secrets and keys are
+stored or logged, what a product can change in someone's infrastructure, or what
+runs at build time. "Widens nothing" is a fine answer — write it down.
 -->
 
 ## Checklist
 
 - [ ] All commits are signed off (`git commit -s`)
 - [ ] Commit subjects follow Conventional Commits
-- [ ] `gate` is green
+- [ ] Required checks are green (`gate` and `DragonGuard`, where the repository requires them)
 - [ ] Tests added or updated for the behaviour that changed
 - [ ] Documentation updated if behaviour or configuration changed
 - [ ] No secrets, credentials, or customer data in the diff

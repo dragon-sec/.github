@@ -5,9 +5,30 @@ body:
   - type: markdown
     attributes:
       value: >
-        If the bug is a way to escape or bypass a sandbox, stop here and read
+        If the bug lets someone cross a tenant boundary, get in without the
+        credentials they should need, or act beyond their role, stop here and
+        read
         [SECURITY.md](https://github.com/dragon-sec/.github/blob/main/SECURITY.md)
         instead — report it privately, not in this form.
+
+  - type: dropdown
+    id: product
+    attributes:
+      label: Product
+      options:
+        - ScaleLock
+        - DragonFlight
+        - DragonHoard
+        - DragonFire
+        - DragonWatch
+        - InferSight
+        - ScaleForge
+        - FlameRunner
+        - FireSight
+        - OathScale
+        - Not sure
+    validations:
+      required: true
 
   - type: textarea
     id: what-happened
@@ -22,8 +43,8 @@ body:
     attributes:
       label: Steps to reproduce
       description: >
-        Ideally a minimal case. If it involves a specific language server,
-        workspace layout or editor, say which.
+        Ideally a minimal case. If it involves a particular sign-in flow,
+        cluster, device or integration, say which.
       placeholder: |
         1. ...
         2. ...
@@ -39,25 +60,19 @@ body:
       required: true
 
   - type: input
-    id: platform
+    id: deployment
     attributes:
-      label: Platform
-      placeholder: "macOS 15.6 arm64 / Ubuntu 24.04 x86_64"
+      label: Deployment
+      description: How and where it runs, and the versions of what it depends on.
+      placeholder: "Container on Kubernetes 1.34, PostgreSQL 18"
     validations:
       required: true
-
-  - type: input
-    id: editor
-    attributes:
-      label: Editor and language server
-      description: Leave blank if not relevant.
-      placeholder: "Neovim 0.11 + rust-analyzer 2026-08-24"
 
   - type: textarea
     id: logs
     attributes:
       label: Logs
       description: >
-        Relevant output. Check it for paths, tokens and hostnames before
-        pasting — this is a public issue.
+        Relevant output. Check it for tokens, secrets, tenant names and
+        hostnames before pasting — this is a public issue.
       render: text

@@ -18,7 +18,7 @@ reproduced at the bottom of this file.
 Add the trailer with `-s`:
 
 ```sh
-git commit -s -m "fix(profile): keep the cargo registry read-only"
+git commit -s -m "fix(token): reject a refresh token replayed after rotation"
 ```
 
 which appends a trailer built from your own `user.name` and `user.email`. Those
@@ -64,27 +64,41 @@ you haven't seen.
 
 ## Pull requests
 
-`main` takes no direct pushes. A ruleset requires a pull request, allows only
-squash and rebase merges, and blocks force-pushes and deletion of the default
-branch. That applies to maintainers too.
+Changes reach `main` through a pull request, merged by squash or rebase. A
+ruleset blocks force-pushes to and deletion of the default branch. A repository
+still in its initial construction may accept direct pushes from maintainers
+until its ruleset adds the pull request requirement; the ruleset is the source
+of truth for which repositories that is.
 
-- Branch from `main`. Naming: `<type>/<short-slug>`, e.g. `feat/profile-schema`.
+- Branch from `main`. Naming: `<type>/<short-slug>`, e.g. `feat/tenant-audit-export`.
 - Rebase onto `main` before opening the PR — squash merges keep the log linear.
 - Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/):
   `feat`, `fix`, `chore`, `test`, `ci`, `docs`, `refactor`. Subject under 72 chars.
 - Explain the *why* in the body. The diff already shows the *what*.
-- Resolve every review thread before merging; the ruleset requires it.
+- Resolve every review thread before merging.
 
-## The merge gate
+## Required checks
 
-Each repository runs one required check named **`gate`**. It is a single
-aggregate context rather than a list of individual checks, so steps can be added
-inside it without editing every repository's ruleset. What it runs for a Rust
-repository lives in [`.github/actions/rust-gate`](.github/actions/rust-gate)
-here, and today that is format, lint (`-D warnings`), build and test.
+Two checks decide whether a pull request can merge, and they answer different
+questions.
 
-If `gate` is red, the PR does not merge — including Renovate's. That is the
-point of it: the DCO check passes as soon as the trailer is present, so on its
+**`gate` — does it build and pass its tests?** One aggregate context rather than
+a list of individual checks, so steps can be added inside it without editing
+every repository's ruleset. For a Go service, with or without an embedded Vite
+UI, it is the [`go-gate`](.github/actions/go-gate) action here: UI install, code
+generation, UI build and lint, then `gofmt`, `go mod tidy`, `go vet`, build and
+test. A repository adds `gate` to its ruleset once it has a CI job that runs it.
+
+**`DragonGuard` — is it safe to merge?**
+[DragonGuard](https://github.com/DragonSecurity/dragonguard), through the
+DragonSecurity CI app, scans each pull request for committed secrets, vulnerable
+dependencies, disallowed licences and insecure code patterns, and fails the check
+when the repository's policy says the finding blocks. Rulesets pin the check to
+that app, so a status of the same name posted by anything else does not satisfy
+it. Run the same scan before you push with `dragon scan`.
+
+If a required check is red, the PR does not merge — including Renovate's. That
+is the point: the DCO check passes as soon as the trailer is present, so on its
 own it gates nothing.
 
 ## Dependency updates

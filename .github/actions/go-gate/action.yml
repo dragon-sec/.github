@@ -1,0 +1,141 @@
+name: Go gate
+description: >
+  Build, lint and test a Go service, and the Vite UI it embeds when it has one.
+  Call this from a job named exactly `gate` — the single build-and-test status
+  context a dragon-sec repository's ruleset requires.
+
+# A composite action rather than a reusable workflow on purpose. A reusable
+# workflow reports its checks as `<caller job> / <inner job>`, so the context
+# would be `gate / something` and the required check named `gate` would never
+# appear. A composite action runs inside the caller's job and keeps the name.
+#
+# Everything here is preinstalled on the runner, a first-party action pinned by
+# SHA, or a dependency verified against something committed: Go modules against
+# go.sum and the checksum database, UI packages against the lockfile. Nothing is
+# curled. golangci-lint is not here yet for that reason — it needs a
+# reproducible install story before it can be part of a required check. Adding
+# it later changes only this file, not any ruleset.
+#
+# The order is the dependency chain. The generate step usually needs the UI's
+# dev dependencies (the OpenAPI client generator lives there), the UI build
+# needs the generated client, and the Go build embeds the built UI — so the Go
+# tests run against the same binary a release ships, not a placeholder.
+#
+# Services the tests need, such as a PostgreSQL container, belong in the calling
+# job: this action runs inside it, so `services:` and `env:` declared there are
+# visible to every step here.
+
+inputs:
+  working-directory:
+    description: Directory containing go.mod.
+    required: false
+    default: "."
+  ui-directory:
+    description: >
+      Directory containing the UI's package.json, relative to the repository
+      root. Leave empty for a service with no UI; every UI step is skipped.
+    required: false
+    default: ""
+  generate:
+    description: >
+      Shell command run from working-directory after UI dependencies are
+      installed and before anything is built — for code generated from the API,
+      such as the client the UI imports. Leave empty to skip.
+    required: false
+    default: ""
+  node-version:
+    description: >
+      Node.js major version for the UI steps. Corepack ships with Node 24 and is
+      dropped from Node 25, so moving past 24 means installing Yarn another way.
+    required: false
+    default: "24"
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Go
+      uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      with:
+        # The toolchain go.mod asks for, so the gate tests what contributors run.
+        go-version-file: ${{ inputs.working-directory }}/go.mod
+        cache-dependency-path: ${{ inputs.working-directory }}/go.sum
+
+    - name: Set up Node.js
+      if: inputs.ui-directory != ''
+      uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    - name: Install UI dependencies
+      if: inputs.ui-directory != ''
+      shell: bash
+      working-directory: ${{ inputs.ui-directory }}
+      # Corepack reads the packageManager field, so the Yarn version is the one
+      # package.json pins. --immutable fails on a lockfile that does not match
+      # package.json instead of quietly resolving something nobody reviewed.
+      run: |
+        corepack enable
+        yarn --version
+        yarn install --immutable
+
+    - name: Generate
+      if: inputs.generate != ''
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      # Passed through the environment rather than interpolated into the script,
+      # so the command is data to the shell and not template-expanded source.
+      env:
+        GATE_GENERATE: ${{ inputs.generate }}
+      run: bash -euo pipefail -c "$GATE_GENERATE"
+
+    - name: Build UI
+      if: inputs.ui-directory != ''
+      shell: bash
+      working-directory: ${{ inputs.ui-directory }}
+      run: yarn build
+
+    - name: Lint UI
+      if: inputs.ui-directory != ''
+      shell: bash
+      working-directory: ${{ inputs.ui-directory }}
+      # Only when the package defines a lint script; a UI without one is not a
+      # reason to fail the gate.
+      run: |
+        if node -e 'process.exit(require("./package.json").scripts?.lint ? 0 : 1)'; then
+          yarn lint
+        else
+          echo "No lint script in package.json; skipping."
+        fi
+
+    - name: Format
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        unformatted="$(git ls-files -z '*.go' | xargs -0 -r gofmt -l)"
+        if [ -n "$unformatted" ]; then
+          echo "::error::gofmt would change these files. Run gofmt -w on them:"
+          echo "$unformatted"
+          exit 1
+        fi
+
+    - name: Tidy
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      # Fails when go.mod or go.sum do not match the imports, rather than letting
+      # the build resolve a version nobody committed.
+      run: go mod tidy -diff
+
+    - name: Vet
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: go vet ./...
+
+    - name: Build
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: go build ./...
+
+    - name: Test
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: go test ./...
