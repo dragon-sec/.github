@@ -5,6 +5,3 @@ contact_links:
     about: >
       Do not open a public issue. Report privately through GitHub Security
       Advisories, or by email — see the security policy.
-  - name: Question or idea
-    url: https://github.com/orgs/dragon-sec/discussions
-    about: Open-ended questions and proposals belong in Discussions.

@@ -1,24 +1,28 @@
-## Your editor runs code from strangers
+## Security for the people who run infrastructure
 
-Every language server, formatter and linter your editor starts is an ordinary
-process with your home directory, your SSH keys, your cloud credentials and your
-network. Nothing separates "index this workspace" from "read `~/.aws` and make a
-request". Installing an extension installs a subprocess, and the editor asks you
-nothing.
+Whoever runs the infrastructure holds the keys to everything on it: the
+identity provider, the clusters, the firewall policy, the pager. Most of the
+tools for that work treat security as a feature to add later. Here it is the
+starting point.
 
-**dragon-sec** builds the parts that make that defensible.
+**dragon-sec** is building a suite of tools for that work, one product at a
+time. Each is its own service with its own releases, and they talk to each other
+over open protocols — OpenID Connect for identity, OpenAPI for everything else —
+not a shared database.
 
-### Ward
+| Product | | What it is | Status |
+| --- | --- | --- | --- |
+| **ScaleLock** | *Guard the keys to your kingdom.* | Multi-tenant identity provider — OpenID Connect, single sign-on, passkeys and TOTP, roles and groups, audit log | In construction |
+| **DragonFlight** | *Command your clusters with precision.* | Kubernetes management — clusters, access from ScaleLock, GitOps deploys, secrets sync | Planned |
+| **DragonHoard** | *Guard your digital treasure.* | Data centre and IP address management — devices, address space, assets and owners | Planned |
+| **DragonFire** | *Automate your defenses with fire and scale.* | Firewall automation across vendors — policy diffs, approvals, audit | Planned |
+| **DragonWatch** | *When danger stirs, we wake first.* | Incident response and on-call — paging, routing, schedules, postmortems | Planned |
+| **InferSight** | *See through the smoke.* | Observability — OpenTelemetry ingestion, dashboards, anomaly alerts | Planned |
+| **ScaleForge** | *Forge infrastructure that endures.* | Infrastructure-as-code management — templates, drift detection, policy as code | Planned |
+| **FlameRunner** | *Ship at the speed of fire.* | Delivery pipelines — pipelines as code, deployment gates, SBOM and provenance checks | Planned |
+| **FireSight** | *Illuminate threats before they strike.* | Threat intelligence — enrichment, indicators, detection rules | Planned |
+| **OathScale** | *Integrity forged in fire.* | Compliance and audit — evidence collection, control mapping, tamper-evident logs | Planned |
 
-Vetted, reproducibly built, sandboxed language servers.
+ScaleLock comes first because everything else signs in through it.
 
-Ward sits between your editor and the language server, so it works in the editor
-you already use — no new IDE, no extension rewrite. Each server runs under a
-capability profile derived from what it actually needs: rust-analyzer gets the
-workspace, `~/.cargo` and the toolchain, and nothing else.
-
-The profiles are the product. A sandbox that breaks rust-analyzer is not a
-security control, it is an uninstall.
-
-**Status: early.** There is nothing to install yet. Watch
-[`ward`](https://github.com/dragon-sec/ward) if you want to see it take shape.
+**Status: early.** Nothing is released yet.

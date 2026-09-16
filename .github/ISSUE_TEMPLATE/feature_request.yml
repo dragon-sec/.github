@@ -2,6 +2,25 @@ name: Feature request
 description: Propose a capability or a change in behaviour.
 labels: ["enhancement"]
 body:
+  - type: dropdown
+    id: product
+    attributes:
+      label: Product
+      options:
+        - ScaleLock
+        - DragonFlight
+        - DragonHoard
+        - DragonFire
+        - DragonWatch
+        - InferSight
+        - ScaleForge
+        - FlameRunner
+        - FireSight
+        - OathScale
+        - Across products
+    validations:
+      required: true
+
   - type: textarea
     id: problem
     attributes:
@@ -24,10 +43,10 @@ body:
     attributes:
       label: What it would take to trust it
       description: >
-        If this widens what a sandboxed process can reach, say what would make
-        that safe — a narrower grant, a prompt, an audit record, a default of
-        off. Requests that widen a profile without an answer here tend to
-        stall.
+        If this widens what a user, token, tenant or integration can reach, say
+        what would make that safe — a narrower scope, an approval step, an
+        audit record, a default of off. Requests that widen access without an
+        answer here tend to stall.
 
   - type: textarea
     id: alternatives
